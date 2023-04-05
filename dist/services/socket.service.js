@@ -15,8 +15,12 @@ import { CONSTANTS } from '../config/constants.config.js';
 // import { SocketHandler } from '../handlers/socket.handler.js';
 import { instrument } from "@socket.io/admin-ui";
 import { Player } from '../models/player.model.js';
+import { test } from '../handlers/test.handler.js';
+import { convertStringtoObject } from '../helpers/common.helper.js';
+import { isJsonString, makeResponse } from '../helpers/utils.helper.js';
 export var IO = null;
 export var SocketBroadCast = null;
+export var socket_G = null;
 export const disconnectPlayer = (socket) => __awaiter(void 0, void 0, void 0, function* () {
     return new Promise((resolve, reject) => {
         try {
@@ -59,6 +63,47 @@ export const initialize_socket = (context, event, src) => __awaiter(void 0, void
                 auth: false,
                 readonly: true
             });
+            resolve(`Socket connection established successfully ✔`);
+        }
+        catch (e) {
+            reject(e);
+        }
+    }));
+});
+var handlers = {};
+handlers[`${CONSTANTS.SOCKET.EVENTS.CUSTOM.TEST}`] = (data, acknowledgement, socket) => __awaiter(void 0, void 0, void 0, function* () { return yield test(data, acknowledgement, socket); });
+export const SocketHandler = (socket) => __awaiter(void 0, void 0, void 0, function* () {
+    return new Promise((resolve, reject) => {
+        socket.onAny((eventName, value, acknowledgement) => __awaiter(void 0, void 0, void 0, function* () {
+            try {
+                if (typeof value === 'string')
+                    value = convertStringtoObject(value);
+                let data = isJsonString(value) ? JSON.parse(value) : value;
+                handlers[eventName] ? handlers[eventName](data, acknowledgement, socket, eventName) : (() => {
+                    global.logger.info('wrong event name');
+                    global.logger.info(eventName);
+                    global.logger.info(value);
+                    socket.emit('wrong', makeResponse({
+                        msg: 'wrong event name'
+                    }));
+                })();
+                resolve();
+            }
+            catch (e) {
+                global.logger.info('wrong payload again');
+                global.logger.error(e.message);
+                acknowledgement(makeResponse({
+                    msg: e.message
+                }));
+                reject(e);
+            }
+        }));
+    });
+});
+// XState service
+export const start_listening_events = (context, event, src) => __awaiter(void 0, void 0, void 0, function* () {
+    return new Promise((resolve, reject) => {
+        try {
             IO.on(CONSTANTS.SOCKET.EVENTS.CORE.CONNECT, (socket) => __awaiter(void 0, void 0, void 0, function* () {
                 global.logger.info(IO.engine.eventNames);
                 socket.on(CONSTANTS.SOCKET.EVENTS.CORE.DISCONNECT, () => __awaiter(void 0, void 0, void 0, function* () { return yield disconnectPlayer(socket); }));
@@ -83,14 +128,13 @@ export const initialize_socket = (context, event, src) => __awaiter(void 0, void
                     global.logger.error(e);
                 });
                 SocketBroadCast = socket.broadcast;
-                // TODO: left here...
-                // await SocketHandler(socket);
+                yield SocketHandler(socket);
             }));
-            resolve(`Socket connection established successfully ✔`);
+            resolve(`Started listening all events...`);
         }
         catch (e) {
             reject(e);
         }
-    }));
+    });
 });
 //# sourceMappingURL=socket.service.js.map

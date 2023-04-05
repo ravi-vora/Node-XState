@@ -1,0 +1,1 @@
+{"version":3,"file":"errors.config.js","sourceRoot":"","sources":["../../src/config/errors.config.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,SAAS,EAAE,MAAM,uBAAuB,CAAC;AAElD,MAAM,CAAC,MAAM,eAAe,GAAG,IAAI,CAAC,SAAS,CAAC;IAC1C,IAAI,EAAE,EAAE;IACR,KAAK,EAAE,IAAI;IACX,OAAO,EAAE,SAAS,CAAC,KAAK,CAAC,QAAQ,CAAC,WAAW;CAChD,CAAC,CAAA"}
